@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Portfolio Builder Pro v3</title>
+
+<style>
+* {
+    box-sizing: border-box;
+    font-family: Segoe UI, sans-serif;
+}
+
+body {
+    margin:0;
+    display:flex;
+    height:100vh;
+    overflow:hidden;
+    color:white;
+    transition: background 0.6s ease;
+}
+
+/* FLOATING GLOW */
+body::before, body::after {
+    content:"";
+    position:absolute;
+    width:500px;
+    height:500px;
+    border-radius:50%;
+    filter:blur(120px);
+    opacity:0.5;
+    z-index:0;
+    animation: float 8s infinite alternate ease-in-out;
+}
+
+body::before { background:#6366f1; top:-150px; left:-150px; }
+body::after { background:#ec4899; bottom:-150px; right:-150px; }
+
+@keyframes float {
+    from { transform:translateY(0px); }
+    to { transform:translateY(40px); }
+}
+
+/* LEFT */
+.left {
+    width:40%;
+    padding:15px;
+    overflow:auto;
+    background:rgba(255,255,255,0.04);
+    backdrop-filter:blur(12px);
+    border-right:1px solid rgba(255,255,255,0.1);
+    z-index:2;
+}
+
+input, textarea, select {
+    width:100%;
+    margin:5px 0;
+    padding:8px;
+    border:none;
+    border-radius:8px;
+    background:rgba(255,255,255,0.08);
+    color:white;
+}
+
+button {
+    width:100%;
+    padding:10px;
+    margin-top:5px;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+    background:linear-gradient(135deg,#6366f1,#ec4899);
+    font-weight:bold;
+}
+
+/* PROJECT INPUT */
+.project {
+    padding:10px;
+    margin:10px 0;
+    background:rgba(255,255,255,0.05);
+    border-radius:10px;
+    cursor:grab;
+}
+
+/* RIGHT */
+.right {
+    width:60%;
+    padding:20px;
+    overflow:auto;
+    z-index:2;
+}
+
+/* CARD */
+.card {
+    background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.1);
+    padding:15px;
+    margin-bottom:20px;
+    border-radius:14px;
+
+    opacity:0;
+    transform:translateY(20px);
+    transition:0.6s ease;
+}
+
+.card.active {
+    opacity:1;
+    transform:translateY(0);
+}
+
+img, video {
+    width:100%;
+    margin-top:10px;
+    border-radius:10px;
+}
+
+/* SLIDER */
+.slider img {
+    display:none;
+}
+
+.slider img.active {
+    display:block;
+}
+
+.nav {
+    display:flex;
+    justify-content:space-between;
+    margin-top:6px;
+}
+
+.nav button {
+    width:48%;
+    background:rgba(255,255,255,0.12);
+}
+
+/* LINKS */
+a {
+    color:#60a5fa;
+    margin-right:10px;
+    text-decoration:none;
+}
+</style>
+</head>
+
+<body>
+
+<!-- LEFT -->
+<div class="left">
+
+<h2>🔥 Portfolio Builder Pro</h2>
+
+<input id="name" placeholder="Name">
+<textarea id="bio" placeholder="Bio"></textarea>
+<input id="skills" placeholder="Skills (comma separated)">
+<input type="file" id="profileImg">
+
+<h3>🎨 Theme</h3>
+<select id="theme" onchange="applyTheme()">
+    <option value="aurora">Aurora Blue</option>
+    <option value="neon">Neon Purple</option>
+    <option value="sunset">Sunset Orange</option>
+    <option value="ocean">Ocean Cyan</option>
+    <option value="emerald">Emerald Green</option>
+    <option value="galaxy">Galaxy Dark</option>
+</select>
+
+<h3>Projects</h3>
+<div id="projects"></div>
+
+<button onclick="addProject()">+ Add Project</button>
+<button onclick="render()">Generate Preview</button>
+<button onclick="exportHTML()">Export HTML</button>
+
+</div>
+
+<!-- RIGHT -->
+<div class="right">
+<div id="output"></div>
+</div>
+
+<script>
+
+/* ================= THEMES ================= */
+const themes = {
+    aurora:"radial-gradient(circle at 20% 20%, #1e3a8a, transparent 40%), radial-gradient(circle at 80% 80%, #9333ea, transparent 40%), #0f172a",
+
+    neon:"radial-gradient(circle at 20% 20%, #a855f7, transparent 40%), radial-gradient(circle at 80% 80%, #ec4899, transparent 40%), #0b0f1a",
+
+    sunset:"radial-gradient(circle at 20% 20%, #f97316, transparent 40%), radial-gradient(circle at 80% 80%, #ef4444, transparent 40%), #0f172a",
+
+    ocean:"radial-gradient(circle at 20% 20%, #06b6d4, transparent 40%), radial-gradient(circle at 80% 80%, #3b82f6, transparent 40%), #0a1220",
+
+    emerald:"radial-gradient(circle at 20% 20%, #10b981, transparent 40%), radial-gradient(circle at 80% 80%, #22c55e, transparent 40%), #06110a",
+
+    galaxy:"radial-gradient(circle at 20% 20%, #6366f1, transparent 40%), radial-gradient(circle at 80% 80%, #0ea5e9, transparent 40%), #020617"
+};
+
+function applyTheme(){
+    const t=document.getElementById("theme").value;
+    document.body.style.background=themes[t];
+}
+
+/* ================= DRAG ================= */
+let dragged=null;
+
+function enableDrag(el){
+    el.draggable=true;
+    el.addEventListener("dragstart",()=>dragged=el);
+    el.addEventListener("dragover",e=>e.preventDefault());
+    el.addEventListener("drop",()=>{
+        if(dragged&&dragged!==el){
+            el.parentNode.insertBefore(dragged,el);
+        }
+    });
+}
+
+/* ================= ADD PROJECT ================= */
+function addProject(){
+
+    const div=document.createElement("div");
+    div.className="project";
+
+    div.innerHTML=`
+        <input placeholder="Title" class="title">
+        <textarea placeholder="Description" class="desc"></textarea>
+
+        <select class="cat">
+            <option>Game</option>
+            <option>Tool</option>
+            <option>Prototype</option>
+            <option>Other</option>
+        </select>
+
+        <input placeholder="GitHub" class="github">
+        <input placeholder="Live" class="live">
+
+        <label>Images</label>
+        <input type="file" class="imgs" multiple>
+
+        <label>Video</label>
+        <input type="file" class="video">
+    `;
+
+    enableDrag(div);
+    document.getElementById("projects").appendChild(div);
+}
+
+/* ================= BASE64 ================= */
+function toBase64(file){
+    return new Promise(res=>{
+        const r=new FileReader();
+        r.onload=()=>res(r.result);
+        r.readAsDataURL(file);
+    });
+}
+
+/* ================= SCROLL ================= */
+function initScroll(){
+    const obs=new IntersectionObserver(e=>{
+        e.forEach(x=>{
+            if(x.isIntersecting)x.target.classList.add("active");
+        });
+    },{threshold:0.15});
+
+    document.querySelectorAll(".card").forEach(c=>obs.observe(c));
+}
+
+/* ================= RENDER ================= */
+async function render(){
+
+    const blocks=document.querySelectorAll(".project");
+    let html="";
+
+    for(let b of blocks){
+
+        const title=b.querySelector(".title").value;
+        const desc=b.querySelector(".desc").value;
+        const cat=b.querySelector(".cat").value;
+        const github=b.querySelector(".github").value;
+        const live=b.querySelector(".live").value;
+
+        const imgs=[...b.querySelector(".imgs").files];
+        const videoFile=b.querySelector(".video").files[0];
+
+        let images=[];
+        for(let i of imgs) images.push(await toBase64(i));
+
+        let video=videoFile?await toBase64(videoFile):"";
+
+        html+=`
+        <div class="card">
+            <h2>${title}</h2>
+            <small>${cat}</small>
+            <p>${desc}</p>
+
+            ${images.length?`
+            <div class="slider">
+                ${images.map((x,i)=>`<img src="${x}" class="${i===0?'active':''}">`).join("")}
+                <div class="nav">
+                    <button onclick="prev(this)">◀</button>
+                    <button onclick="next(this)">▶</button>
+                </div>
+            </div>`:""}
+
+            ${video?`<video controls src="${video}"></video>`:""}
+
+            <div>
+                ${github?`<a href="${github}" target="_blank">GitHub</a>`:""}
+                ${live?`<a href="${live}" target="_blank">Live</a>`:""}
+            </div>
+        </div>`;
+    }
+
+    const profile=document.getElementById("profileImg").files[0];
+    let profileImg=profile?await toBase64(profile):"";
+
+    document.getElementById("output").innerHTML=`
+        <div class="card">
+            ${profileImg?`<img src="${profileImg}" style="width:120px;height:120px;border-radius:50%;">`:""}
+            <h1>${document.getElementById("name").value}</h1>
+            <p>${document.getElementById("bio").value}</p>
+        </div>
+
+        <div class="card">
+            <h3>Skills</h3>
+            ${document.getElementById("skills").value.split(",").map(s=>`<span>${s.trim()}</span>`).join(" ")}
+        </div>
+
+        ${html}
+    `;
+
+    initScroll();
+}
+
+/* ================= SLIDER ================= */
+function next(btn){
+    const s=btn.closest(".slider");
+    const imgs=s.querySelectorAll("img");
+    let i=[...imgs].findIndex(x=>x.classList.contains("active"));
+    imgs[i].classList.remove("active");
+    imgs[(i+1)%imgs.length].classList.add("active");
+}
+
+function prev(btn){
+    const s=btn.closest(".slider");
+    const imgs=s.querySelectorAll("img");
+    let i=[...imgs].findIndex(x=>x.classList.contains("active"));
+    imgs[i].classList.remove("active");
+    imgs[(i-1+imgs.length)%imgs.length].classList.add("active");
+}
+
+/* ================= EXPORT ================= */
+async function exportHTML(){
+
+    const html=document.getElementById("output").innerHTML;
+
+    const full=`
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+body{background:#0f172a;color:white;font-family:Arial;padding:20px;}
+.card{background:#1e293b;margin:20px;padding:15px;border-radius:12px;}
+img,video{width:100%;border-radius:10px;}
+a{color:#60a5fa;}
+.card{opacity:0;transform:translateY(20px);transition:0.6s;}
+.card.active{opacity:1;transform:translateY(0);}
+</style>
+</head>
+<body>
+
+${html}
+
+<script>
+const obs=new IntersectionObserver(e=>{
+e.forEach(x=>{if(x.isIntersecting)x.target.classList.add('active')})
+},{threshold:0.15});
+document.querySelectorAll('.card').forEach(c=>obs.observe(c));
+<\/script>
+
+</body>
+</html>`;
+
+    const blob=new Blob([full],{type:"text/html"});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download="portfolio.html";
+    a.click();
+}
+
+/* INIT */
+applyTheme();
+
+</script>
+
+</body>
+</html>
