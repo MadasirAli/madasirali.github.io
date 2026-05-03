@@ -226,7 +226,7 @@ Performance optimization"></textarea>
         <label>Images</label>
         <input type="file" class="imgs" multiple>
 
-        <label>Video</label>
+        <label>Video (place file inside /videos/ after export)</label>
         <input type="file" class="video">
     `;
 
@@ -308,7 +308,7 @@ async function render(){
 
         let images=[];
         for(let i of imgs) images.push(await toBase64(i));
-        let video=videoFile?await toBase64(videoFile):"";
+        let videoName = videoFile ? videoFile.name : "";
 
         html+=`
         <div class="card">
@@ -336,7 +336,7 @@ async function render(){
                 </div>
             </div>` : ""}
 
-            ${video?`<video controls src="${video}"></video>`:""}
+	    ${videoName?`<video controls src="videos/${videoName}" preload="metadata"></video>`:""}
 
             <div style="display:flex;gap:10px;margin-top:12px;">
 
