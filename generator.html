@@ -218,8 +218,10 @@ function addProject(){
         <input placeholder="GitHub" class="github">
         <input placeholder="Live" class="live">
 
-        <label>My Contribution</label>
-        <textarea class="contrib" placeholder="What did you build?"></textarea>
+        <label>My Contribution (one per line)</label>
+        <textarea class="contrib" placeholder="Built UI
+API integration
+Performance optimization"></textarea>
 
         <label>Images</label>
         <input type="file" class="imgs" multiple>
@@ -247,6 +249,25 @@ function initScroll(){
     },{threshold:0.15});
 
     document.querySelectorAll(".card").forEach(c=>obs.observe(c));
+}
+
+/* IMAGE SLIDER */
+function nextImg(btn){
+    const slider = btn.closest(".slider");
+    const imgs = slider.querySelectorAll("img");
+    let index = [...imgs].findIndex(i => i.style.display !== "none");
+
+    imgs[index].style.display = "none";
+    imgs[(index + 1) % imgs.length].style.display = "block";
+}
+
+function prevImg(btn){
+    const slider = btn.closest(".slider");
+    const imgs = slider.querySelectorAll("img");
+    let index = [...imgs].findIndex(i => i.style.display !== "none");
+
+    imgs[index].style.display = "none";
+    imgs[(index - 1 + imgs.length) % imgs.length].style.display = "block";
 }
 
 async function render(){
@@ -279,6 +300,7 @@ async function render(){
         const cat=b.querySelector(".cat").value;
         const github=b.querySelector(".github").value;
         const live=b.querySelector(".live").value;
+
         const contrib=b.querySelector(".contrib").value;
 
         const imgs=[...b.querySelector(".imgs").files];
@@ -294,13 +316,26 @@ async function render(){
             <small>${cat}</small>
             <p>${desc}</p>
 
-            ${contrib?`
-            <div style="margin-top:10px;padding:10px;border-left:3px solid #6366f1;background:rgba(255,255,255,0.04);border-radius:8px;">
+            ${contrib ? `
+            <div style="margin-top:10px;padding:12px;border-left:3px solid #6366f1;background:rgba(255,255,255,0.04);border-radius:10px;">
                 <strong>My Contribution:</strong>
-                <p>${contrib}</p>
-            </div>`:""}
+                <ul style="margin:8px 0 0 18px;">
+                    ${contrib.split("\n").filter(x=>x.trim()).map(x=>`<li>${x}</li>`).join("")}
+                </ul>
+            </div>` : ""}
 
-            ${images.length?images.map(x=>`<img src="${x}">`).join(""):""}
+            ${images.length ? `
+            <div class="slider">
+                ${images.map((x,i)=>`
+                    <img src="${x}" style="display:${i===0?'block':'none'};">
+                `).join("")}
+
+                <div style="display:flex;gap:10px;margin-top:8px;">
+                    <button onclick="prevImg(this)">◀ Prev</button>
+                    <button onclick="nextImg(this)">Next ▶</button>
+                </div>
+            </div>` : ""}
+
             ${video?`<video controls src="${video}"></video>`:""}
 
             <div style="display:flex;gap:10px;margin-top:12px;">
@@ -338,42 +373,95 @@ async function render(){
 }
 
 function exportHTML(){
-const html=document.getElementById("output").innerHTML;
 
-const full=`
+const html = document.getElementById("output").innerHTML;
+
+/* GET CURRENT THEME */
+const theme = document.getElementById("theme").value;
+const bg = themes[theme];
+
+/* COPY FULL STYLES */
+const styles = document.querySelector("style").innerHTML;
+
+const full = `
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+<meta charset="UTF-8">
+<title>My Portfolio</title>
+
 <style>
-body{background:#0f172a;color:white;font-family:Arial;padding:20px;}
-.card{background:#1e293b;margin:20px;padding:15px;border-radius:12px;}
-img,video{width:100%;border-radius:10px;}
-a{color:#60a5fa;}
-.card.active{opacity:1;}
-.skill{display:inline-block;padding:6px 12px;margin:5px;border-radius:999px;background:#334155;}
+${styles}
+html, body {
+    height: auto !important;
+    overflow: auto !important;
+}
+body {
+    display: flex;
+    justify-content: center;
+    padding: 40px 20px;
+}
+
+.container {
+    width: 100%;
+    max-width: 900px;
+}
+
+/* APPLY SAME BACKGROUND */
+body {
+    background: ${bg};
+}
 </style>
+
 </head>
 <body>
 
-${html}
+<div class="container">
+    ${html}
+</div>
 
 <script>
+
+/* SCROLL ANIMATION */
 const obs=new IntersectionObserver(e=>{
-e.forEach(x=>{if(x.isIntersecting)x.target.classList.add('active')})
+    e.forEach(x=>{
+        if(x.isIntersecting)x.target.classList.add("active");
+    });
 },{threshold:0.15});
-document.querySelectorAll('.card').forEach(c=>obs.observe(c));
+
+document.querySelectorAll(".card").forEach(c=>obs.observe(c));
+
+/* SLIDER */
+function nextImg(btn){
+    const slider = btn.closest(".slider");
+    const imgs = slider.querySelectorAll("img");
+    let index = [...imgs].findIndex(i => i.style.display !== "none");
+
+    imgs[index].style.display = "none";
+    imgs[(index + 1) % imgs.length].style.display = "block";
+}
+
+function prevImg(btn){
+    const slider = btn.closest(".slider");
+    const imgs = slider.querySelectorAll("img");
+    let index = [...imgs].findIndex(i => i.style.display !== "none");
+
+    imgs[index].style.display = "none";
+    imgs[(index - 1 + imgs.length) % imgs.length].style.display = "block";
+}
+
 <\/script>
 
 </body>
 </html>`;
 
-const blob=new Blob([full],{type:"text/html"});
-const a=document.createElement("a");
-a.href=URL.createObjectURL(blob);
-a.download="portfolio.html";
+/* DOWNLOAD */
+const blob = new Blob([full], {type:"text/html"});
+const a = document.createElement("a");
+a.href = URL.createObjectURL(blob);
+a.download = "portfolio.html";
 a.click();
 }
-
 applyTheme();
 </script>
 
