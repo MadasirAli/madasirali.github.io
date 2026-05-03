@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Portfolio Builder Pro v3</title>
+<title>Portfolio Builder Pro v3 (Enhanced)</title>
 
 <style>
 * {
@@ -78,7 +78,6 @@ button {
     margin:10px 0;
     background:rgba(255,255,255,0.05);
     border-radius:10px;
-    cursor:grab;
 }
 
 /* RIGHT */
@@ -96,7 +95,6 @@ button {
     padding:15px;
     margin-bottom:20px;
     border-radius:14px;
-
     opacity:0;
     transform:translateY(20px);
     transition:0.6s ease;
@@ -113,38 +111,39 @@ img, video {
     border-radius:10px;
 }
 
-/* SLIDER */
-.slider img {
-    display:none;
-}
-
-.slider img.active {
-    display:block;
-}
-
-.nav {
-    display:flex;
-    justify-content:space-between;
-    margin-top:6px;
-}
-
-.nav button {
-    width:48%;
+/* SKILLS */
+.skill{
+    display:inline-block;
+    padding:6px 12px;
+    margin:5px;
+    border-radius:999px;
     background:rgba(255,255,255,0.12);
+    font-size:12px;
+    border:1px solid rgba(255,255,255,0.15);
 }
 
-/* LINKS */
-a {
-    color:#60a5fa;
-    margin-right:10px;
-    text-decoration:none;
+/* PROFILE */
+.centerProfile{
+    text-align:center;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+}
+
+.profileImg{
+    width:120px;
+    height:120px;
+    border-radius:50%;
+    object-fit:cover;
+    margin-bottom:10px;
+    border:2px solid rgba(255,255,255,0.2);
 }
 </style>
 </head>
 
 <body>
 
-<!-- LEFT -->
 <div class="left">
 
 <h2>🔥 Portfolio Builder Pro</h2>
@@ -164,6 +163,14 @@ a {
     <option value="galaxy">Galaxy Dark</option>
 </select>
 
+<h3>📩 Contact Section</h3>
+
+<label><input type="checkbox" id="enableContact" checked> Enable Contact</label>
+
+<input id="contactEmail" placeholder="Email">
+<input id="contactPhone" placeholder="Phone">
+<input id="contactLinkedIn" placeholder="LinkedIn URL">
+
 <h3>Projects</h3>
 <div id="projects"></div>
 
@@ -173,50 +180,27 @@ a {
 
 </div>
 
-<!-- RIGHT -->
 <div class="right">
 <div id="output"></div>
 </div>
 
 <script>
 
-/* ================= THEMES ================= */
+/* THEMES */
 const themes = {
-    aurora:"radial-gradient(circle at 20% 20%, #1e3a8a, transparent 40%), radial-gradient(circle at 80% 80%, #9333ea, transparent 40%), #0f172a",
-
-    neon:"radial-gradient(circle at 20% 20%, #a855f7, transparent 40%), radial-gradient(circle at 80% 80%, #ec4899, transparent 40%), #0b0f1a",
-
-    sunset:"radial-gradient(circle at 20% 20%, #f97316, transparent 40%), radial-gradient(circle at 80% 80%, #ef4444, transparent 40%), #0f172a",
-
-    ocean:"radial-gradient(circle at 20% 20%, #06b6d4, transparent 40%), radial-gradient(circle at 80% 80%, #3b82f6, transparent 40%), #0a1220",
-
-    emerald:"radial-gradient(circle at 20% 20%, #10b981, transparent 40%), radial-gradient(circle at 80% 80%, #22c55e, transparent 40%), #06110a",
-
-    galaxy:"radial-gradient(circle at 20% 20%, #6366f1, transparent 40%), radial-gradient(circle at 80% 80%, #0ea5e9, transparent 40%), #020617"
+aurora:"radial-gradient(circle at 20% 20%, #1e3a8a, transparent 40%), radial-gradient(circle at 80% 80%, #9333ea, transparent 40%), #0f172a",
+neon:"radial-gradient(circle at 20% 20%, #a855f7, transparent 40%), radial-gradient(circle at 80% 80%, #ec4899, transparent 40%), #0b0f1a",
+sunset:"radial-gradient(circle at 20% 20%, #f97316, transparent 40%), radial-gradient(circle at 80% 80%, #ef4444, transparent 40%), #0f172a",
+ocean:"radial-gradient(circle at 20% 20%, #06b6d4, transparent 40%), radial-gradient(circle at 80% 80%, #3b82f6, transparent 40%), #0a1220",
+emerald:"radial-gradient(circle at 20% 20%, #10b981, transparent 40%), radial-gradient(circle at 80% 80%, #22c55e, transparent 40%), #06110a",
+galaxy:"radial-gradient(circle at 20% 20%, #6366f1, transparent 40%), radial-gradient(circle at 80% 80%, #0ea5e9, transparent 40%), #020617"
 };
 
 function applyTheme(){
-    const t=document.getElementById("theme").value;
-    document.body.style.background=themes[t];
+    document.body.style.background = themes[document.getElementById("theme").value];
 }
 
-/* ================= DRAG ================= */
-let dragged=null;
-
-function enableDrag(el){
-    el.draggable=true;
-    el.addEventListener("dragstart",()=>dragged=el);
-    el.addEventListener("dragover",e=>e.preventDefault());
-    el.addEventListener("drop",()=>{
-        if(dragged&&dragged!==el){
-            el.parentNode.insertBefore(dragged,el);
-        }
-    });
-}
-
-/* ================= ADD PROJECT ================= */
 function addProject(){
-
     const div=document.createElement("div");
     div.className="project";
 
@@ -234,6 +218,9 @@ function addProject(){
         <input placeholder="GitHub" class="github">
         <input placeholder="Live" class="live">
 
+        <label>My Contribution</label>
+        <textarea class="contrib" placeholder="What did you build?"></textarea>
+
         <label>Images</label>
         <input type="file" class="imgs" multiple>
 
@@ -241,11 +228,9 @@ function addProject(){
         <input type="file" class="video">
     `;
 
-    enableDrag(div);
     document.getElementById("projects").appendChild(div);
 }
 
-/* ================= BASE64 ================= */
 function toBase64(file){
     return new Promise(res=>{
         const r=new FileReader();
@@ -254,7 +239,6 @@ function toBase64(file){
     });
 }
 
-/* ================= SCROLL ================= */
 function initScroll(){
     const obs=new IntersectionObserver(e=>{
         e.forEach(x=>{
@@ -265,11 +249,28 @@ function initScroll(){
     document.querySelectorAll(".card").forEach(c=>obs.observe(c));
 }
 
-/* ================= RENDER ================= */
 async function render(){
 
     const blocks=document.querySelectorAll(".project");
     let html="";
+
+    const profile=document.getElementById("profileImg").files[0];
+    let profileImg=profile?await toBase64(profile):"";
+
+    const skillsHTML = document.getElementById("skills").value
+        .split(",")
+        .map(s=>s.trim())
+        .filter(Boolean)
+        .map(s=>`<span class="skill">${s}</span>`)
+        .join("");
+
+    html += `
+    <div class="card centerProfile">
+        ${profileImg?`<img class="profileImg" src="${profileImg}">`:""}
+        <h1>${document.getElementById("name").value}</h1>
+        <p>${document.getElementById("bio").value}</p>
+        <div>${skillsHTML}</div>
+    </div>`;
 
     for(let b of blocks){
 
@@ -278,13 +279,13 @@ async function render(){
         const cat=b.querySelector(".cat").value;
         const github=b.querySelector(".github").value;
         const live=b.querySelector(".live").value;
+        const contrib=b.querySelector(".contrib").value;
 
         const imgs=[...b.querySelector(".imgs").files];
         const videoFile=b.querySelector(".video").files[0];
 
         let images=[];
         for(let i of imgs) images.push(await toBase64(i));
-
         let video=videoFile?await toBase64(videoFile):"";
 
         html+=`
@@ -293,68 +294,53 @@ async function render(){
             <small>${cat}</small>
             <p>${desc}</p>
 
-            ${images.length?`
-            <div class="slider">
-                ${images.map((x,i)=>`<img src="${x}" class="${i===0?'active':''}">`).join("")}
-                <div class="nav">
-                    <button onclick="prev(this)">◀</button>
-                    <button onclick="next(this)">▶</button>
-                </div>
+            ${contrib?`
+            <div style="margin-top:10px;padding:10px;border-left:3px solid #6366f1;background:rgba(255,255,255,0.04);border-radius:8px;">
+                <strong>My Contribution:</strong>
+                <p>${contrib}</p>
             </div>`:""}
 
+            ${images.length?images.map(x=>`<img src="${x}">`).join(""):""}
             ${video?`<video controls src="${video}"></video>`:""}
 
-            <div>
-                ${github?`<a href="${github}" target="_blank">GitHub</a>`:""}
-                ${live?`<a href="${live}" target="_blank">Live</a>`:""}
+            <div style="display:flex;gap:10px;margin-top:12px;">
+
+                ${github?`
+                <a href="${github}" target="_blank"
+                style="flex:1;padding:10px;border-radius:10px;
+                background:linear-gradient(135deg,#6366f1,#4f46e5);
+                text-align:center;color:white;font-weight:bold;text-decoration:none;">
+                GitHub</a>`:""}
+
+                ${live?`
+                <a href="${live}" target="_blank"
+                style="flex:1;padding:10px;border-radius:10px;
+                background:linear-gradient(135deg,#ec4899,#f97316);
+                text-align:center;color:white;font-weight:bold;text-decoration:none;">
+                Live</a>`:""}
+
             </div>
         </div>`;
     }
 
-    const profile=document.getElementById("profileImg").files[0];
-    let profileImg=profile?await toBase64(profile):"";
-
-    document.getElementById("output").innerHTML=`
+    if(document.getElementById("enableContact").checked){
+        html+=`
         <div class="card">
-            ${profileImg?`<img src="${profileImg}" style="width:120px;height:120px;border-radius:50%;">`:""}
-            <h1>${document.getElementById("name").value}</h1>
-            <p>${document.getElementById("bio").value}</p>
-        </div>
+            <h2>📩 Contact Me</h2>
+            <p>${document.getElementById("contactEmail").value}</p>
+            <p>${document.getElementById("contactPhone").value}</p>
+            <p>${document.getElementById("contactLinkedIn").value}</p>
+        </div>`;
+    }
 
-        <div class="card">
-            <h3>Skills</h3>
-            ${document.getElementById("skills").value.split(",").map(s=>`<span>${s.trim()}</span>`).join(" ")}
-        </div>
-
-        ${html}
-    `;
-
+    document.getElementById("output").innerHTML=html;
     initScroll();
 }
 
-/* ================= SLIDER ================= */
-function next(btn){
-    const s=btn.closest(".slider");
-    const imgs=s.querySelectorAll("img");
-    let i=[...imgs].findIndex(x=>x.classList.contains("active"));
-    imgs[i].classList.remove("active");
-    imgs[(i+1)%imgs.length].classList.add("active");
-}
+function exportHTML(){
+const html=document.getElementById("output").innerHTML;
 
-function prev(btn){
-    const s=btn.closest(".slider");
-    const imgs=s.querySelectorAll("img");
-    let i=[...imgs].findIndex(x=>x.classList.contains("active"));
-    imgs[i].classList.remove("active");
-    imgs[(i-1+imgs.length)%imgs.length].classList.add("active");
-}
-
-/* ================= EXPORT ================= */
-async function exportHTML(){
-
-    const html=document.getElementById("output").innerHTML;
-
-    const full=`
+const full=`
 <!DOCTYPE html>
 <html>
 <head>
@@ -363,8 +349,8 @@ body{background:#0f172a;color:white;font-family:Arial;padding:20px;}
 .card{background:#1e293b;margin:20px;padding:15px;border-radius:12px;}
 img,video{width:100%;border-radius:10px;}
 a{color:#60a5fa;}
-.card{opacity:0;transform:translateY(20px);transition:0.6s;}
-.card.active{opacity:1;transform:translateY(0);}
+.card.active{opacity:1;}
+.skill{display:inline-block;padding:6px 12px;margin:5px;border-radius:999px;background:#334155;}
 </style>
 </head>
 <body>
@@ -381,16 +367,14 @@ document.querySelectorAll('.card').forEach(c=>obs.observe(c));
 </body>
 </html>`;
 
-    const blob=new Blob([full],{type:"text/html"});
-    const a=document.createElement("a");
-    a.href=URL.createObjectURL(blob);
-    a.download="portfolio.html";
-    a.click();
+const blob=new Blob([full],{type:"text/html"});
+const a=document.createElement("a");
+a.href=URL.createObjectURL(blob);
+a.download="portfolio.html";
+a.click();
 }
 
-/* INIT */
 applyTheme();
-
 </script>
 
 </body>
