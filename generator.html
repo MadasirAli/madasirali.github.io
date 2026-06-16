@@ -223,9 +223,8 @@ function addProject(){
 API integration
 Performance optimization"></textarea>
 
-        <label>Images</label>
-        <input type="file" class="imgs" multiple>
-
+<label>Images (place files inside /images/ after export)</label>
+<input type="file" class="imgs" multiple>
         <label>Video (place file inside /videos/ after export)</label>
         <input type="file" class="video">
     `;
@@ -306,8 +305,8 @@ async function render(){
         const imgs=[...b.querySelector(".imgs").files];
         const videoFile=b.querySelector(".video").files[0];
 
-        let images=[];
-        for(let i of imgs) images.push(await toBase64(i));
+        let imageNames = imgs.map(i => i.name);
+
         let videoName = videoFile ? videoFile.name : "";
 
         html+=`
@@ -324,11 +323,11 @@ async function render(){
                 </ul>
             </div>` : ""}
 
-            ${images.length ? `
-            <div class="slider">
-                ${images.map((x,i)=>`
-                    <img src="${x}" style="display:${i===0?'block':'none'};">
-                `).join("")}
+${imageNames.length ? `
+<div class="slider">
+    ${imageNames.map((name,i)=>`
+        <img src="images/${name}" style="display:${i===0?'block':'none'};">
+    `).join("")}
 
                 <div style="display:flex;gap:10px;margin-top:8px;">
                     <button onclick="prevImg(this)">◀ Prev</button>
